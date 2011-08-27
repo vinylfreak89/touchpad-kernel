@@ -2542,6 +2542,10 @@ non_fips_alg:
 	return -EINVAL;
 }
 
+<<<<<<< HEAD
 #endif /* CONFIG_CRYPTO_MANAGER_DISABLE_TESTS */
+=======
+#endif /* CONFIG_CRYPTO_MANAGER_TESTS */
+>>>>>>> v2.6.35.10
 
 EXPORT_SYMBOL_GPL(alg_test);

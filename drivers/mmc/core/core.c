@@ -1119,6 +1119,17 @@ void mmc_rescan(struct work_struct *work)
 	u32 ocr;
 	int err;
 	int extend_wakelock = 0;
+	unsigned long flags;
+
+	spin_lock_irqsave(&host->lock, flags);
+
+	if (host->rescan_disable) {
+		spin_unlock_irqrestore(&host->lock, flags);
+		return;
+	}
+
+	spin_unlock_irqrestore(&host->lock, flags);
+
 
 	mmc_bus_get(host);
 
@@ -1226,7 +1237,7 @@ void mmc_stop_host(struct mmc_host *host)
 
 	if (host->caps & MMC_CAP_DISABLE)
 		cancel_delayed_work(&host->disable);
-	cancel_delayed_work(&host->detect);
+	cancel_delayed_work_sync(&host->detect);
 	mmc_flush_scheduled_work();
 
 	/* clear pm flags now and let card drivers set them as needed */
@@ -1399,12 +1410,6 @@ int mmc_resume_host(struct mmc_host *host)
 	}
 	mmc_bus_put(host);
 
-	/*
-	 * We add a slight delay here so that resume can progress
-	 * in parallel.
-	 */
-	mmc_detect_change(host, 1);
-
 	return err;
 }
 EXPORT_SYMBOL(mmc_resume_host);
@@ -1419,6 +1424,7 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 	struct mmc_host *host = container_of(
 		notify_block, struct mmc_host, pm_notify);
 	unsigned long flags;
+
 
 	switch (mode) {
 	case PM_HIBERNATION_PREPARE:
@@ -1439,8 +1445,10 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		if (host->bus_ops->remove)
 			host->bus_ops->remove(host);
 		mmc_claim_host(host);
+
 		mmc_detach_bus(host);
 		mmc_release_host(host);
+		host->pm_flags = 0;
 		break;
 
 	case PM_POST_SUSPEND:
@@ -1454,6 +1462,7 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		host->rescan_disable = 0;
 		spin_unlock_irqrestore(&host->lock, flags);
 		mmc_detect_change(host, 0);
+
 	}
 
 	return 0;
