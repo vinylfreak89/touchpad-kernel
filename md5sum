@@ -1,0 +1,9 @@
+./drivers/scsi/scsi_wait_scan.ko
+./drivers/net/wireless/libra/librasdioif.ko
+./drivers/media/video/gspca/gspca_main.ko
+./drivers/video/backlight/lcd.ko
+./crypto/ansi_cprng.ko
+./net/ipv4/tcp_bic.ko
+./arch/arm/mach-msm/dma_test.ko
+./arch/arm/oprofile/oprofile.ko
+./arch/arm/common/cpaccess.ko
